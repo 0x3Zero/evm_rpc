@@ -1,0 +1,12 @@
+{
+  "fweb3": {
+    "modules": [
+      {
+        "name": "fweb3",
+        "path": "artifacts/ed25519.wasm",
+        "logger_enabled": true,
+        "mem_page_count": 100
+      }
+    ]
+  }
+}
