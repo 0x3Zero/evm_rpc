@@ -14,3 +14,4 @@ ethereum-types = "0.14.1"
 hex = "0.4.3"
 jsonrpc-core = "18.0.0"
 tiny-keccak = { version = "2.0", features = ["keccak"] }
+ethabi = "18.0.0"

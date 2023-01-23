@@ -15,6 +15,7 @@
  */
 
 use crate::jsonrpc_helpers::JSON_RPC;
+use crate::types::{ResultSerde, Tx};
 use marine_rs_sdk::marine;
 use serde_json::Value;
 pub type Result<T> = std::result::Result<T, T>;
@@ -23,28 +24,19 @@ pub type Result<T> = std::result::Result<T, T>;
 #[derive(Debug)]
 pub struct JsonRpcResult {
     pub jsonrpc: String,
-    pub result: Vec<u8>,
+    pub result: String,
     pub error: String,
     pub id: u64,
 }
 
 impl JsonRpcResult {
-    pub fn from_res(raw_result: Result<String>, result_is_hex: bool) -> Self {
+    pub fn from_res(raw_result: Result<String>) -> Self {
         let jsonrpc = JSON_RPC.into();
         match raw_result {
             Ok(res) => {
                 let result_obj: Value = serde_json::from_str(&res).unwrap();
                 let id: u64 = serde_json::from_value(result_obj["id"].clone()).unwrap();
-                let result;
-                if result_is_hex {
-                    let mut hex_string: String =
-                        serde_json::from_value(result_obj["result"].clone()).unwrap();
-                    hex_string = (&hex_string[2..]).to_string();
-                    hex_string = format!("0{}", hex_string);
-                    result = hex::decode(hex_string).unwrap();
-                } else {
-                    result = result_obj["result"].to_string().as_bytes().to_vec();
-                }
+                let result = serde_json::from_value(result_obj["result"].clone()).unwrap();
 
                 Self {
                     jsonrpc,
@@ -60,7 +52,53 @@ impl JsonRpcResult {
                 Self {
                     jsonrpc,
                     id,
-                    result: "".as_bytes().to_vec(),
+                    result: "".to_string(),
+                    error: err,
+                }
+            }
+        }
+    }
+}
+
+#[marine]
+#[derive(Debug)]
+pub struct JsonRpcTransactionResult {
+    pub jsonrpc: String,
+    pub transactions: Vec<Tx>,
+    pub error: String,
+    pub id: u64,
+}
+
+impl JsonRpcTransactionResult {
+    pub fn from_res(raw_result: Result<String>) -> Self {
+        let jsonrpc = JSON_RPC.into();
+        match raw_result {
+            Ok(res) => {
+                let result_obj: Value = serde_json::from_str(&res).unwrap();
+                let id: u64 = serde_json::from_value(result_obj["id"].clone()).unwrap();
+                let result: ResultSerde =
+                    serde_json::from_value(result_obj["result"].clone()).unwrap();
+
+                let txs = result
+                    .transactions
+                    .iter()
+                    .map(|serde| Tx::from(serde))
+                    .collect();
+                Self {
+                    jsonrpc,
+                    id,
+                    transactions: txs,
+                    error: "".to_string(),
+                }
+            }
+            Err(err) => {
+                let result_obj: Value = serde_json::from_str(&err).unwrap();
+                let id: u64 = serde_json::from_value(result_obj["id"].clone()).unwrap();
+
+                Self {
+                    jsonrpc,
+                    id,
+                    transactions: Vec::new(),
                     error: err,
                 }
             }

@@ -5,9 +5,11 @@ use marine_rs_sdk::WasmLoggerBuilder;
 
 mod bytes_type;
 pub mod eth_calls;
+mod eth_contract;
 pub mod eth_utils;
 mod fce_results;
 mod jsonrpc_helpers;
+mod types;
 
 module_manifest!();
 

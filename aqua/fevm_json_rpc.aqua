@@ -1,0 +1,36 @@
+module FevmJsonRpc declares *
+
+data JsonRpcResult:
+  jsonrpc: string
+  result: string
+  error: string
+  id: u64
+
+data Tx:
+  block_hash: string
+  block_number: string
+  from: string
+  gas: string
+  gas_price: string
+  hash: string
+  input: string
+  nonce: string
+  to: string
+  transaction_index: string
+  value: string
+
+data JsonRpcTransactionResult:
+  jsonrpc: string
+  transactions: []Tx
+  error: string
+  id: u64
+
+service FevmJsonRpc("Fevm_json_rpc"):
+  contract_get_remote_abi(node_url: string, abi_url: string, method_name: string, contract_address: string)  
+  decimal_to_hex(decimal: u64) -> string
+  eth_get_balance(url: string, add: string) -> JsonRpcResult
+  eth_get_block_by_number(url: string, block_in_hex: string) -> JsonRpcTransactionResult
+  eth_get_latest_block_number(url: string) -> JsonRpcResult
+  eth_send_raw_transaction(url: string, signed_tx: string) -> JsonRpcResult
+  hex_to_decimal(hex: string) -> u64
+  util_get_method_hash(input: string) -> string
