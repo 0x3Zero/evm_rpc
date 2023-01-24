@@ -1,18 +1,7 @@
 use crate::bytes_type::Bytes;
-use ethereum_types::{H160, H256, U256};
+use ethereum_types::{H160, U256};
 use marine_rs_sdk::marine;
-use serde::{Deserialize, Deserializer, Serialize};
-use serde_json::json;
-
-fn null_to_default<'de, D, T>(d: D) -> Result<T, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Default + Deserialize<'de>,
-{
-    let opt = Option::deserialize(d)?;
-    let val = opt.unwrap_or_else(T::default);
-    Ok(val)
-}
+use serde::{Deserialize, Serialize};
 
 #[marine]
 #[derive(Debug, Default)]
@@ -28,12 +17,6 @@ pub struct Tx {
     pub to: String,
     pub transaction_index: String,
     pub value: String,
-}
-
-#[derive(Deserialize)]
-struct GetTxResponse {
-    #[serde(deserialize_with = "null_to_default")]
-    pub result: Option<ResultSerde>,
 }
 
 #[derive(Debug, Default, Deserialize)]
