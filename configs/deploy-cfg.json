@@ -3,9 +3,10 @@
     "modules": [
       {
         "name": "fweb3",
-        "path": "artifacts/ed25519.wasm",
+        "path": "artifacts/fevm_json_rpc.wasm",
         "logger_enabled": true,
-        "mem_page_count": 100
+        "mem_page_count": 100,
+        "mounted_binaries": [["curl", "/usr/bin/curl"]]
       }
     ]
   }

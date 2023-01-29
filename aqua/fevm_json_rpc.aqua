@@ -37,4 +37,5 @@ service FevmJsonRpc("Fevm_json_rpc"):
   eth_get_latest_block_number(url: string) -> JsonRpcResult
   eth_send_raw_transaction(url: string, signed_tx: string) -> JsonRpcResult
   hex_to_decimal(hex: string) -> u64
+  hex_to_string(hex: string) -> string
   util_get_method_hash(input: string) -> string

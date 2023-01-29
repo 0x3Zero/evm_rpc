@@ -51,6 +51,17 @@ pub fn decimal_to_hex(decimal: u64) -> String {
 }
 
 #[marine]
+pub fn hex_to_string(hex: String) -> String {
+    let bytes = hex::decode(&hex[2..]).unwrap();
+    let mut text = String::from_utf8(bytes).unwrap();
+    text = text.replace(" ", "");
+    text = text.replace("\\", "");
+    text = text.trim_end_matches(char::from(0)).to_string();
+    text = text.trim_matches(char::from(0)).to_string();
+    text
+}
+
+#[marine]
 pub fn util_get_method_hash(input: String) -> String {
     let input_str = input.as_str();
     let input = input_str.strip_prefix("0x").unwrap_or(input_str);
