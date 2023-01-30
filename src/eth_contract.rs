@@ -103,7 +103,7 @@ pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String) -> EventL
                     Token::Address(address) => logs.push(DataLogParam {
                         name: token.name.clone(),
                         kind: "address".to_string(),
-                        value: hex::encode(address).to_string(),
+                        value: format!("0x{}", hex::encode(address).to_string()),
                     }),
                     Token::Int(value) => logs.push(DataLogParam {
                         name: token.name.clone(),

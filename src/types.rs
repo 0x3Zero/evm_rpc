@@ -17,6 +17,15 @@ pub struct Tx {
     pub to: String,
     pub transaction_index: String,
     pub value: String,
+    pub logs: Vec<TxLog>,
+}
+
+#[marine]
+#[derive(Debug, Default)]
+pub struct TxLog {
+    pub topics: Vec<String>,
+    pub data: String,
+    pub transaction_hash: String,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -57,8 +66,19 @@ pub struct TxSerde {
     #[serde(rename = "transactionIndex")]
     pub transaction_index: Option<String>,
 
+    pub logs: Vec<TxSerdeLogs>,
+
     // // value: QUANTITY - value transferred in Wei.
     pub value: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct TxSerdeLogs {
+    pub topics: Option<Vec<String>>,
+    pub data: Option<String>,
+
+    #[serde(rename = "transactionHash")]
+    pub transaction_hash: Option<String>,
 }
 
 impl From<&TxSerde> for Tx {
@@ -75,6 +95,15 @@ impl From<&TxSerde> for Tx {
             to: ser.to.clone().unwrap_or_default(),
             transaction_index: ser.transaction_index.clone().unwrap_or_default(),
             value: ser.value.clone().unwrap_or_default(),
+            logs: ser
+                .logs
+                .iter()
+                .map(|log| TxLog {
+                    topics: log.topics.clone().unwrap_or_default(),
+                    data: log.data.clone().unwrap_or_default(),
+                    transaction_hash: log.transaction_hash.clone().unwrap_or_default(),
+                })
+                .collect(),
         }
     }
 }

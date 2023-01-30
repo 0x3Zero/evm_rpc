@@ -57,6 +57,7 @@ pub fn eth_get_transaction_receipt(url: String, trans_hash: String) -> JsonRpcTr
 
     let curl_args = Request::new(method, params, id).as_sys_string(&url);
     let response = curl_request_res(curl_args).unwrap();
+    log::info!("{:?}", response);
     check_response_transaction_string(response, &id)
 }
 

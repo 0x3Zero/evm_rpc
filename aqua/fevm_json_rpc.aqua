@@ -11,6 +11,11 @@ data EventLogParamResult:
   success: bool
   error_msg: string
 
+data TxLog:
+  topics: []string
+  data: string
+  transaction_hash: string
+
 data Tx:
   block_hash: string
   block_number: string
@@ -23,6 +28,7 @@ data Tx:
   to: string
   transaction_index: string
   value: string
+  logs: []TxLog
 
 data JsonRpcBlockResult:
   jsonrpc: string
