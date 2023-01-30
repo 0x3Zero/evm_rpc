@@ -83,7 +83,7 @@ pub fn util_get_method_hash(input: String) -> String {
 }
 
 #[marine]
-pub fn util_get_list_blocks_range(start: i64, end: i64) -> Vec<i64> {
+pub fn util_get_list_blocks_range(start: u64, end: u64) -> Vec<u64> {
     let mut blocks = Vec::new();
 
     for n in start..end {

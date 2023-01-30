@@ -64,5 +64,5 @@ service FevmJsonRpc("Fevm_json_rpc"):
   eth_send_raw_transaction(url: string, signed_tx: string) -> JsonRpcResult
   hex_to_decimal(hex: string) -> u64
   hex_to_string(hex: string) -> string
-  util_get_list_blocks_range(start: i64, end: i64) -> []i64
+  util_get_list_blocks_range(start: u64, end: u64) -> []u64
   util_get_method_hash(input: string) -> string
