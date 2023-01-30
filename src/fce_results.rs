@@ -15,11 +15,12 @@
  */
 
 use crate::jsonrpc_helpers::JSON_RPC;
-use crate::types::{ResultSerde, Tx};
+use crate::types::{ResultSerde, Tx, TxSerde};
 use marine_rs_sdk::marine;
 use serde_json::Value;
 pub type Result<T> = std::result::Result<T, T>;
 
+// Result
 #[marine]
 #[derive(Debug)]
 pub struct JsonRpcResult {
@@ -60,16 +61,17 @@ impl JsonRpcResult {
     }
 }
 
+// Block
 #[marine]
 #[derive(Debug)]
-pub struct JsonRpcTransactionResult {
+pub struct JsonRpcBlockResult {
     pub jsonrpc: String,
     pub transactions: Vec<Tx>,
     pub error: String,
     pub id: u64,
 }
 
-impl JsonRpcTransactionResult {
+impl JsonRpcBlockResult {
     pub fn from_res(raw_result: Result<String>) -> Self {
         let jsonrpc = JSON_RPC.into();
         match raw_result {
@@ -106,6 +108,48 @@ impl JsonRpcTransactionResult {
     }
 }
 
+// Transaction
+#[marine]
+#[derive(Debug)]
+pub struct JsonRpcTransactionResult {
+    pub jsonrpc: String,
+    pub transaction: Tx,
+    pub error: String,
+    pub id: u64,
+}
+
+impl JsonRpcTransactionResult {
+    pub fn from_res(raw_result: Result<String>) -> Self {
+        let jsonrpc = JSON_RPC.into();
+        match raw_result {
+            Ok(res) => {
+                let result_obj: Value = serde_json::from_str(&res).unwrap();
+                let id: u64 = serde_json::from_value(result_obj["id"].clone()).unwrap();
+                let result: TxSerde = serde_json::from_value(result_obj["result"].clone()).unwrap();
+
+                Self {
+                    jsonrpc,
+                    id,
+                    transaction: Tx::from(&result),
+                    error: "".to_string(),
+                }
+            }
+            Err(err) => {
+                let result_obj: Value = serde_json::from_str(&err).unwrap();
+                let id: u64 = serde_json::from_value(result_obj["id"].clone()).unwrap();
+
+                Self {
+                    jsonrpc,
+                    id,
+                    transaction: Tx::default(),
+                    error: err,
+                }
+            }
+        }
+    }
+}
+
+// Test
 #[marine]
 #[derive(Debug)]
 pub struct TestResult {

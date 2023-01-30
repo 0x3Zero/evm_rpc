@@ -9,6 +9,7 @@ mod eth_contract;
 pub mod eth_utils;
 mod fce_results;
 mod jsonrpc_helpers;
+mod models;
 mod types;
 
 module_manifest!();

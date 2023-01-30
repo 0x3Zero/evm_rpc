@@ -1,8 +1,13 @@
 use std::str::FromStr;
 
-use crate::{curl_request_res, eth_calls::eth_call, types::TxCall};
-use ethabi::{Contract, Token};
-use ethereum_types::{H160, U256};
+use crate::{
+    curl_request_res,
+    eth_calls::eth_call,
+    models::log_param::{DataLogParam, EventLogParamResult},
+    types::TxCall,
+};
+use ethabi::{Contract, RawLog, Token};
+use ethereum_types::{H160, H256, U256};
 use marine_rs_sdk::marine;
 
 #[marine]
@@ -44,4 +49,120 @@ pub fn contract_view_call(
 
     let response = eth_call(node_url, params, "latest".into()).result;
     response
+}
+
+#[marine]
+pub fn decode_input_to_get_method_name(abi_url: String, input: String) -> String {
+    let args = vec![format!(r#"{}"#, abi_url)];
+    let response = curl_request_res(args).unwrap();
+    let contract = Contract::load(response.as_bytes()).unwrap();
+
+    let input_bytes = hex::decode(&input[2..]).unwrap();
+
+    for (name, function) in contract.functions {
+        if &input_bytes[0..4] == function[0].short_signature() {
+            return name;
+        }
+    }
+
+    return "".to_string();
+}
+
+#[marine]
+pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String) -> EventLogParamResult {
+    let args = vec![format!(r#"{}"#, abi_url)];
+    let response = curl_request_res(args).unwrap();
+    let contract = Contract::load(response.as_bytes()).unwrap();
+
+    let mut logs_h256: Vec<H256> = Vec::new();
+
+    for topic in topics.clone() {
+        logs_h256.push(H256::from_str(&topic).unwrap())
+    }
+
+    let mut logs: Vec<DataLogParam> = Vec::new();
+
+    let event_name = logs_h256.clone()[0];
+
+    for (_, event) in contract.events {
+        if event_name == event[0].signature() {
+            let raw_log = RawLog {
+                topics: logs_h256.clone(),
+                data: hex::decode(&data[2..]).unwrap(),
+            };
+
+            let log = event[0].parse_log(raw_log).unwrap();
+
+            for token in log.params {
+                match token.value.clone() {
+                    Token::Uint(value) => logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "uint".to_string(),
+                        value: value.to_string(),
+                    }),
+                    Token::Address(address) => logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "address".to_string(),
+                        value: hex::encode(address).to_string(),
+                    }),
+                    Token::Int(value) => logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "int".to_string(),
+                        value: value.to_string(),
+                    }),
+                    Token::Bool(value) => logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "bool".to_string(),
+                        value: value.to_string(),
+                    }),
+                    Token::Bytes(value) => logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "bytes".to_string(),
+                        value: hex::encode(value).to_string(),
+                    }),
+                    Token::String(value) => logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "bytes".to_string(),
+                        value: hex::encode(value.clone()).to_string(),
+                    }),
+                    _ => {
+                        log::info!("Other token");
+                    }
+                }
+            }
+
+            return EventLogParamResult {
+                event_name: event[0].clone().name,
+                params: logs,
+                success: true,
+                error_msg: "".to_string(),
+            };
+        }
+    }
+
+    return EventLogParamResult {
+        event_name: "".to_string(),
+        params: Vec::new(),
+        success: false,
+        error_msg: "".to_string(),
+    };
+}
+
+pub fn decode_input(abi_url: String, input: String) -> Vec<Token> {
+    let args = vec![format!(r#"{}"#, abi_url)];
+    let response = curl_request_res(args).unwrap();
+    let contract = Contract::load(response.as_bytes()).unwrap();
+
+    let input_bytes = hex::decode(&input[2..]).unwrap();
+
+    for (_, function) in contract.functions {
+        if &input_bytes[0..4] == function[0].short_signature() {
+            let input_data = function[0]
+                .decode_input(&hex::decode(&input[10..]).unwrap())
+                .unwrap();
+            return input_data;
+        }
+    }
+
+    return Vec::new();
 }

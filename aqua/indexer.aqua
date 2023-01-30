@@ -1,0 +1,6 @@
+func indexer():
+  -- 1. Call eth_getBlockNumber to get the current block number
+  -- 2. Use a loop to repeatedly call eth_getBlockByNumber using increasing block numbers starting from 0, until the current block number
+  -- 3. For each block retrieve the transactions and check if the to or from field matches the smart contract address
+  -- 4. Call eth_getTransactionReceipt to retrieve the transaction receipt, which includes the input 
+  -- data of the transaction (which can be used to determine the function that was called and any associated parameters).

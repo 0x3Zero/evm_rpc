@@ -1,10 +1,15 @@
 module FevmJsonRpc declares *
 
-data JsonRpcResult:
-  jsonrpc: string
-  result: string
-  error: string
-  id: u64
+data DataLogParam:
+  name: string
+  kind: string
+  value: string
+
+data EventLogParamResult:
+  event_name: string
+  params: []DataLogParam
+  success: bool
+  error_msg: string
 
 data Tx:
   block_hash: string
@@ -19,9 +24,21 @@ data Tx:
   transaction_index: string
   value: string
 
-data JsonRpcTransactionResult:
+data JsonRpcBlockResult:
   jsonrpc: string
   transactions: []Tx
+  error: string
+  id: u64
+
+data JsonRpcResult:
+  jsonrpc: string
+  result: string
+  error: string
+  id: u64
+
+data JsonRpcTransactionResult:
+  jsonrpc: string
+  transaction: Tx
   error: string
   id: u64
 
@@ -32,9 +49,12 @@ data TxParam:
 service FevmJsonRpc("Fevm_json_rpc"):
   contract_view_call(node_url: string, abi_url: string, method_name: string, contract_address: string, tx_params: []TxParam) -> string
   decimal_to_hex(decimal: u64) -> string
+  decode_input_to_get_method_name(abi_url: string, input: string) -> string
+  decode_logs(abi_url: string, topics: []string, data: string) -> EventLogParamResult
   eth_get_balance(url: string, add: string) -> JsonRpcResult
-  eth_get_block_by_number(url: string, block_in_hex: string) -> JsonRpcTransactionResult
+  eth_get_block_by_number(url: string, block_in_hex: string) -> JsonRpcBlockResult
   eth_get_latest_block_number(url: string) -> JsonRpcResult
+  eth_get_transaction_receipt(url: string, trans_hash: string) -> JsonRpcTransactionResult
   eth_send_raw_transaction(url: string, signed_tx: string) -> JsonRpcResult
   hex_to_decimal(hex: string) -> u64
   hex_to_string(hex: string) -> string
