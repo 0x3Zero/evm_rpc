@@ -66,10 +66,15 @@ pub struct TxSerde {
     #[serde(rename = "transactionIndex")]
     pub transaction_index: Option<String>,
 
+    #[serde(default = "empty_vector")]
     pub logs: Vec<TxSerdeLogs>,
 
     // // value: QUANTITY - value transferred in Wei.
     pub value: Option<String>,
+}
+
+fn empty_vector() -> Vec<TxSerdeLogs> {
+    Vec::new()
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
