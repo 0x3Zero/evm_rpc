@@ -1,4 +1,6 @@
-use crate::fce_results::{JsonRpcBlockResult, JsonRpcResult, JsonRpcTransactionResult};
+use crate::fce_results::{
+    JsonRpcBlockResult, JsonRpcLogResult, JsonRpcResult, JsonRpcTransactionResult,
+};
 use marine_rs_sdk::marine;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -19,6 +21,19 @@ pub fn check_response_string(response: String, id: &u64) -> JsonRpcResult {
     match response.contains("error") {
         true => JsonRpcResult::from_res(Result::from(Err(response))),
         false => JsonRpcResult::from_res(Result::from(Ok(response))),
+    }
+}
+
+pub fn check_response_log_string(response: String, id: &u64) -> JsonRpcLogResult {
+    if response.len() == 0 {
+        let err_msg = "{\"jsonrpc\":\"$V\",\"id\":$ID,\"error\":{\"code\":-32700,\"message\":Curl connection failed}}";
+        let err_msg = err_msg.replace("$ID", &id.to_string());
+        return JsonRpcLogResult::from_res(Result::from(Err(err_msg)));
+    }
+
+    match response.contains("error") {
+        true => JsonRpcLogResult::from_res(Result::from(Err(response))),
+        false => JsonRpcLogResult::from_res(Result::from(Ok(response))),
     }
 }
 

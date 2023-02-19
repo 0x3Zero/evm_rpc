@@ -60,6 +60,7 @@ service FevmJsonRpc("Fevm_json_rpc"):
   eth_get_balance(url: string, add: string) -> JsonRpcResult
   eth_get_block_by_number(url: string, block_in_hex: string) -> JsonRpcBlockResult
   eth_get_latest_block_number(url: string) -> JsonRpcResult
+  eth_get_logs(url: string, abi_url: string, start_block_in_hex: string, end_block_in_hex: string, address: string, topics: []string) -> []EventLogParamResult
   eth_get_transaction_receipt(url: string, trans_hash: string) -> JsonRpcTransactionResult
   eth_send_raw_transaction(url: string, signed_tx: string) -> JsonRpcResult
   hex_to_decimal(hex: string) -> u64

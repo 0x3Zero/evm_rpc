@@ -2,6 +2,7 @@ use ethabi::EventParam;
 use marine_rs_sdk::marine;
 
 #[marine]
+#[derive(Debug)]
 pub struct EventLogParamResult {
     pub event_name: String,
     pub params: Vec<DataLogParam>,
