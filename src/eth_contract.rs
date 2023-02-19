@@ -4,7 +4,7 @@ use crate::{
     curl_request_res,
     eth_calls::eth_call,
     models::log_param::{DataLogParam, EventLogParamResult},
-    types::TxCall,
+    types::{TxCall, TxLog},
 };
 use ethabi::{Contract, RawLog, Token};
 use ethereum_types::{H160, H256, U256};
@@ -51,29 +51,39 @@ pub fn contract_view_call(
     response
 }
 
-#[marine]
-pub fn decode_input_to_get_method_name(abi_url: String, input: String) -> String {
-    let args = vec![format!(r#"{}"#, abi_url)];
-    let response = curl_request_res(args).unwrap();
-    let contract = Contract::load(response.as_bytes()).unwrap();
-
-    let input_bytes = hex::decode(&input[2..]).unwrap();
-
-    for (name, function) in contract.functions {
-        if &input_bytes[0..4] == function[0].short_signature() {
-            return name;
-        }
-    }
-
-    return "".to_string();
-}
-
+/**
+ * Decode logs individually
+ */
 #[marine]
 pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String) -> EventLogParamResult {
     let args = vec![format!(r#"{}"#, abi_url)];
     let response = curl_request_res(args).unwrap();
     let contract = Contract::load(response.as_bytes()).unwrap();
 
+    decode_log(contract, topics, data)
+}
+
+/**
+ * Decode logs in batches
+ */
+pub fn decode_batch_logs(abi_url: String, tx_logs: Vec<TxLog>) -> Vec<EventLogParamResult> {
+    let args = vec![format!(r#"{}"#, abi_url)];
+    let response = curl_request_res(args).unwrap();
+    let contract = Contract::load(response.as_bytes()).unwrap();
+
+    let mut data_events: Vec<EventLogParamResult> = Vec::new();
+
+    for tx_log in tx_logs {
+        data_events.push(decode_log(contract.clone(), tx_log.topics, tx_log.data));
+    }
+
+    data_events
+}
+
+/**
+ * Decode logs from topics and data
+ */
+fn decode_log(contract: Contract, topics: Vec<String>, data: String) -> EventLogParamResult {
     let mut logs_h256: Vec<H256> = Vec::new();
 
     for topic in topics.clone() {
@@ -126,7 +136,7 @@ pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String) -> EventL
                         value: hex::encode(value.clone()).to_string(),
                     }),
                     _ => {
-                        log::info!("Other token");
+                        log::info!("Other token: {:?}", token.value.clone());
                     }
                 }
             }
@@ -148,21 +158,19 @@ pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String) -> EventL
     };
 }
 
-pub fn decode_input(abi_url: String, input: String) -> Vec<Token> {
+#[marine]
+pub fn decode_input_to_get_method_name(abi_url: String, input: String) -> String {
     let args = vec![format!(r#"{}"#, abi_url)];
     let response = curl_request_res(args).unwrap();
     let contract = Contract::load(response.as_bytes()).unwrap();
 
     let input_bytes = hex::decode(&input[2..]).unwrap();
 
-    for (_, function) in contract.functions {
+    for (name, function) in contract.functions {
         if &input_bytes[0..4] == function[0].short_signature() {
-            let input_data = function[0]
-                .decode_input(&hex::decode(&input[10..]).unwrap())
-                .unwrap();
-            return input_data;
+            return name;
         }
     }
 
-    return Vec::new();
+    return "".to_string();
 }

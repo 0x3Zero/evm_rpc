@@ -1,10 +1,14 @@
 use crate::curl_request_res;
+use crate::eth_contract::{decode_batch_logs, decode_logs};
 use crate::eth_utils::{
-    check_response_block_string, check_response_string, check_response_transaction_string,
-    get_nonce,
+    check_response_block_string, check_response_log_string, check_response_string,
+    check_response_transaction_string, get_nonce,
 };
-use crate::fce_results::{JsonRpcBlockResult, JsonRpcResult, JsonRpcTransactionResult};
+use crate::fce_results::{
+    JsonRpcBlockResult, JsonRpcLogResult, JsonRpcResult, JsonRpcTransactionResult,
+};
 use crate::jsonrpc_helpers::Request;
+use crate::models::log_param::EventLogParamResult;
 use crate::types::TxCall;
 
 use jsonrpc_core as rpc;
@@ -122,4 +126,34 @@ pub fn eth_get_balance(url: String, add: String) -> JsonRpcResult {
 
     log::info!("{}", response);
     check_response_string(response, &id)
+}
+
+#[marine]
+pub fn eth_get_logs(
+    url: String,
+    abi_url: String,
+    start_block_in_hex: &str,
+    end_block_in_hex: &str,
+    address: &str,
+    topics: Vec<String>,
+) -> Vec<EventLogParamResult> {
+    let method = "eth_getLogs".to_string();
+
+    let filter = json!({
+        "fromBlock": start_block_in_hex,
+        "toBlock": end_block_in_hex,
+        "address": address,
+        "topics": topics
+    });
+
+    let params: rpc::Value = json!(vec![filter]);
+
+    let id = get_nonce();
+
+    let curl_args = Request::new(method, params, id).as_sys_string(&url);
+    let response = curl_request_res(curl_args).unwrap();
+
+    let log_result = check_response_log_string(response, &id);
+
+    decode_batch_logs(abi_url, log_result.clone().result)
 }

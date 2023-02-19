@@ -21,7 +21,7 @@ pub struct Tx {
 }
 
 #[marine]
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TxLog {
     pub topics: Vec<String>,
     pub data: String,
@@ -109,6 +109,19 @@ impl From<&TxSerde> for Tx {
                     transaction_hash: log.transaction_hash.clone().unwrap_or_default(),
                 })
                 .collect(),
+        }
+    }
+}
+
+/***
+ * Parse Logs data from respond to TxLog
+ */
+impl From<TxSerdeLogs> for TxLog {
+    fn from(ser: TxSerdeLogs) -> Self {
+        Self {
+            transaction_hash: ser.transaction_hash.clone().unwrap_or_default(),
+            topics: ser.topics.clone().unwrap_or_default(),
+            data: ser.data.clone().unwrap_or_default(),
         }
     }
 }
