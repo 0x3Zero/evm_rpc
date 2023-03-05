@@ -1,17 +1,20 @@
 use ethabi::EventParam;
 use marine_rs_sdk::marine;
+use serde::{Deserialize, Serialize};
+use serde_json::{Value};
 
 #[marine]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct EventLogParamResult {
     pub event_name: String,
     pub params: Vec<DataLogParam>,
     pub success: bool,
     pub error_msg: String,
+    pub data: String,
 }
 
 #[marine]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DataLogParam {
     pub name: String,
     pub kind: String,

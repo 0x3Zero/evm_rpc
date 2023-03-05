@@ -10,6 +10,7 @@ data EventLogParamResult:
   params: []DataLogParam
   success: bool
   error_msg: string
+  data: string
 
 data TxLog:
   topics: []string
