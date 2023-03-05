@@ -132,8 +132,8 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String) -> EventLog
                     }),
                     Token::String(value) => logs.push(DataLogParam {
                         name: token.name.clone(),
-                        kind: "bytes".to_string(),
-                        value: hex::encode(value.clone()).to_string(),
+                        kind: "string".to_string(),
+                        value: value.to_string(),
                     }),
                     _ => {
                         log::info!("Other token: {:?}", token.value.clone());
