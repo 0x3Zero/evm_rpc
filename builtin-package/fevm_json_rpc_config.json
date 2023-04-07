@@ -1,0 +1,9 @@
+{
+  "name": "fevm_json_rpc",
+  "max_heap_size": "8 MiB",
+  "logger_enabled": true,
+  "mounted_binaries":
+  {
+    "curl": "/usr/bin/curl"
+  }
+}
