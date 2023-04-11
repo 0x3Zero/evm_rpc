@@ -2,6 +2,7 @@ use crate::bytes_type::Bytes;
 use ethereum_types::{H160, U256};
 use marine_rs_sdk::marine;
 use serde::{Deserialize, Serialize};
+use crate::eth_utils::{hex_to_decimal};
 
 #[marine]
 #[derive(Debug, Default)]
@@ -26,6 +27,7 @@ pub struct TxLog {
     pub topics: Vec<String>,
     pub data: String,
     pub transaction_hash: String,
+    pub block_number: u64,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -84,6 +86,9 @@ pub struct TxSerdeLogs {
 
     #[serde(rename = "transactionHash")]
     pub transaction_hash: Option<String>,
+
+    #[serde(rename = "blockNumber")]
+    pub block_number: Option<String>,
 }
 
 impl From<&TxSerde> for Tx {
@@ -107,6 +112,7 @@ impl From<&TxSerde> for Tx {
                     topics: log.topics.clone().unwrap_or_default(),
                     data: log.data.clone().unwrap_or_default(),
                     transaction_hash: log.transaction_hash.clone().unwrap_or_default(),
+                    block_number: hex_to_decimal(log.block_number.clone().unwrap_or_default()),
                 })
                 .collect(),
         }
@@ -122,6 +128,7 @@ impl From<TxSerdeLogs> for TxLog {
             transaction_hash: ser.transaction_hash.clone().unwrap_or_default(),
             topics: ser.topics.clone().unwrap_or_default(),
             data: ser.data.clone().unwrap_or_default(),
+            block_number: hex_to_decimal(ser.block_number.clone().unwrap_or_default()),
         }
     }
 }

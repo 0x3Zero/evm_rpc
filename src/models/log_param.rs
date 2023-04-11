@@ -11,6 +11,7 @@ pub struct EventLogParamResult {
     pub success: bool,
     pub error_msg: String,
     pub data: String,
+    pub block_number: u64,
 }
 
 #[marine]
