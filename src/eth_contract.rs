@@ -56,12 +56,12 @@ pub fn contract_view_call(
  * Decode logs individually
  */
 #[marine]
-pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String, block_number: u64) -> EventLogParamResult {
+pub fn decode_logs(abi_url: String, tx_log: TxLog) -> EventLogParamResult {
     let args = vec![format!(r#"{}"#, abi_url)];
     let response = curl_request_res(args).unwrap();
     let contract = Contract::load(response.as_bytes()).unwrap();
 
-    decode_log(contract, topics, data, block_number)
+    decode_log(contract, tx_log)
 }
 
 /**
@@ -75,7 +75,7 @@ pub fn decode_batch_logs(abi_url: String, tx_logs: Vec<TxLog>) -> Vec<EventLogPa
     let mut data_events: Vec<EventLogParamResult> = Vec::new();
 
     for tx_log in tx_logs {
-        data_events.push(decode_log(contract.clone(), tx_log.topics, tx_log.data, tx_log.block_number));
+        data_events.push(decode_log(contract.clone(), tx_log));
     }
 
     data_events
@@ -84,10 +84,10 @@ pub fn decode_batch_logs(abi_url: String, tx_logs: Vec<TxLog>) -> Vec<EventLogPa
 /**
  * Decode logs from topics and data
  */
-fn decode_log(contract: Contract, topics: Vec<String>, data: String, block_number: u64) -> EventLogParamResult {
+fn decode_log(contract: Contract, tx_log: TxLog ) -> EventLogParamResult {
     let mut logs_h256: Vec<H256> = Vec::new();
 
-    for topic in topics.clone() {
+    for topic in tx_log.topics.clone() {
         logs_h256.push(H256::from_str(&topic).unwrap())
     }
 
@@ -99,7 +99,7 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String, block_numbe
         if event_name == event[0].signature() {
             let raw_log = RawLog {
                 topics: logs_h256.clone(),
-                data: hex::decode(&data[2..]).unwrap(),
+                data: hex::decode(&tx_log.data.clone()[2..]).unwrap(),
             };
 
             let log = event[0].parse_log(raw_log).unwrap();
@@ -169,7 +169,8 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String, block_numbe
                 success: true,
                 error_msg: "".to_string(),
                 data: Value::Object(data).to_string(),
-                block_number: block_number,
+                block_number: tx_log.block_number,
+                transaction_hash: tx_log.transaction_hash,
             };
         }
     }
@@ -181,6 +182,7 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String, block_numbe
         error_msg: "".to_string(),
         data: Value::Null.to_string(),
         block_number: 0,
+        transaction_hash: "".to_string(),
     };
 }
 
