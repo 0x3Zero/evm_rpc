@@ -12,6 +12,6 @@ mkdir -p artifacts
 rm -f artifacts/*.wasm
 cp target/wasm32-wasi/release/fevm_json_rpc.wasm artifacts/
 cp target/wasm32-wasi/release/fevm_json_rpc.wasm builtin-package/
-marine aqua artifacts/fevm_json_rpc.wasm -s fevm_json_rpc -i Fevm_json_rpc > ./aqua/fevm_json_rpc.aqua
+marine aqua artifacts/fevm_json_rpc.wasm -s fevm_json_rpc -i fevm_json_rpc > ./aqua/fevm_json_rpc.aqua
 
 RUST_LOG="info" mrepl --quiet Config.toml
