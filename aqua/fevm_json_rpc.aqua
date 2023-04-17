@@ -10,11 +10,15 @@ data EventLogParamResult:
   params: []DataLogParam
   success: bool
   error_msg: string
+  data: string
+  block_number: u64
+  transaction_hash: string
 
 data TxLog:
   topics: []string
   data: string
   transaction_hash: string
+  block_number: u64
 
 data Tx:
   block_hash: string
@@ -52,11 +56,12 @@ data TxParam:
   value_type: string
   value: string
 
-service FevmJsonRpc("Fevm_json_rpc"):
+service FevmJsonRpc("fevm_json_rpc"):
   contract_view_call(node_url: string, abi_url: string, method_name: string, contract_address: string, tx_params: []TxParam) -> string
   decimal_to_hex(decimal: u64) -> string
+  decode_abi(abi: []string, data: string) -> []string
   decode_input_to_get_method_name(abi_url: string, input: string) -> string
-  decode_logs(abi_url: string, topics: []string, data: string) -> EventLogParamResult
+  decode_logs(abi_url: string, tx_log: TxLog) -> EventLogParamResult
   eth_get_balance(url: string, add: string) -> JsonRpcResult
   eth_get_block_by_number(url: string, block_in_hex: string) -> JsonRpcBlockResult
   eth_get_latest_block_number(url: string) -> JsonRpcResult

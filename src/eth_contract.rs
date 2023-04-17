@@ -6,6 +6,7 @@ use crate::{
     models::log_param::{DataLogParam, EventLogParamResult},
     types::{TxCall, TxLog},
 };
+use serde_json::{Map, Value, Number};
 use ethabi::{Contract, RawLog, Token};
 use ethereum_types::{H160, H256, U256};
 use marine_rs_sdk::marine;
@@ -55,12 +56,12 @@ pub fn contract_view_call(
  * Decode logs individually
  */
 #[marine]
-pub fn decode_logs(abi_url: String, topics: Vec<String>, data: String) -> EventLogParamResult {
+pub fn decode_logs(abi_url: String, tx_log: TxLog) -> EventLogParamResult {
     let args = vec![format!(r#"{}"#, abi_url)];
     let response = curl_request_res(args).unwrap();
     let contract = Contract::load(response.as_bytes()).unwrap();
 
-    decode_log(contract, topics, data)
+    decode_log(contract, tx_log)
 }
 
 /**
@@ -74,7 +75,7 @@ pub fn decode_batch_logs(abi_url: String, tx_logs: Vec<TxLog>) -> Vec<EventLogPa
     let mut data_events: Vec<EventLogParamResult> = Vec::new();
 
     for tx_log in tx_logs {
-        data_events.push(decode_log(contract.clone(), tx_log.topics, tx_log.data));
+        data_events.push(decode_log(contract.clone(), tx_log));
     }
 
     data_events
@@ -83,10 +84,10 @@ pub fn decode_batch_logs(abi_url: String, tx_logs: Vec<TxLog>) -> Vec<EventLogPa
 /**
  * Decode logs from topics and data
  */
-fn decode_log(contract: Contract, topics: Vec<String>, data: String) -> EventLogParamResult {
+fn decode_log(contract: Contract, tx_log: TxLog ) -> EventLogParamResult {
     let mut logs_h256: Vec<H256> = Vec::new();
 
-    for topic in topics.clone() {
+    for topic in tx_log.topics.clone() {
         logs_h256.push(H256::from_str(&topic).unwrap())
     }
 
@@ -98,43 +99,64 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String) -> EventLog
         if event_name == event[0].signature() {
             let raw_log = RawLog {
                 topics: logs_h256.clone(),
-                data: hex::decode(&data[2..]).unwrap(),
+                data: hex::decode(&tx_log.data.clone()[2..]).unwrap(),
             };
 
             let log = event[0].parse_log(raw_log).unwrap();
+            let mut data = Map::new();
 
             for token in log.params {
                 match token.value.clone() {
-                    Token::Uint(value) => logs.push(DataLogParam {
+                    Token::Uint(value) => {
+                      logs.push(DataLogParam {
                         name: token.name.clone(),
                         kind: "uint".to_string(),
-                        value: value.to_string(),
-                    }),
-                    Token::Address(address) => logs.push(DataLogParam {
+                        value: value.clone().to_string(),
+                      });
+                      let json_number = Number::from_str(value.clone().to_string().as_str()).unwrap();
+                      data.insert(token.name.clone().to_string(), Value::Number(json_number));
+                    },
+                    Token::Address(address) => {
+                      logs.push(DataLogParam {
                         name: token.name.clone(),
                         kind: "address".to_string(),
                         value: format!("0x{}", hex::encode(address).to_string()),
-                    }),
-                    Token::Int(value) => logs.push(DataLogParam {
+                      });
+                      let str_address = format!("0x{}", hex::encode(address).to_string());
+                      data.insert(token.name.clone().to_string(), Value::String(str_address));
+                    },
+                    Token::Int(value) => {
+                      logs.push(DataLogParam {
                         name: token.name.clone(),
                         kind: "int".to_string(),
-                        value: value.to_string(),
-                    }),
-                    Token::Bool(value) => logs.push(DataLogParam {
+                        value: value.clone().to_string(),
+                      });
+                    },
+                    Token::Bool(value) => {
+                      logs.push(DataLogParam {
                         name: token.name.clone(),
                         kind: "bool".to_string(),
-                        value: value.to_string(),
-                    }),
-                    Token::Bytes(value) => logs.push(DataLogParam {
-                        name: token.name.clone(),
-                        kind: "bytes".to_string(),
-                        value: hex::encode(value).to_string(),
-                    }),
-                    Token::String(value) => logs.push(DataLogParam {
+                        value: value.clone().to_string(),
+                      });
+                      data.insert(token.name.clone().to_string(), Value::Bool(value.clone()));
+                    },
+                    Token::Bytes(value) => {
+                      logs.push(DataLogParam {
                         name: token.name.clone(),
                         kind: "bytes".to_string(),
                         value: hex::encode(value.clone()).to_string(),
-                    }),
+                      });
+                      let str_bytes = hex::encode(value.clone()).to_string();
+                      data.insert(token.name.clone().to_string(), Value::String(str_bytes));
+                    },
+                    Token::String(value) => {
+                      logs.push(DataLogParam {
+                        name: token.name.clone(),
+                        kind: "string".to_string(),
+                        value: value.clone().to_string(),
+                      });
+                      data.insert(token.name.clone().to_string(), Value::String(value.clone().to_string()));
+                    },
                     _ => {
                         log::info!("Other token: {:?}", token.value.clone());
                     }
@@ -146,6 +168,9 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String) -> EventLog
                 params: logs,
                 success: true,
                 error_msg: "".to_string(),
+                data: Value::Object(data).to_string(),
+                block_number: tx_log.block_number,
+                transaction_hash: tx_log.transaction_hash,
             };
         }
     }
@@ -155,6 +180,9 @@ fn decode_log(contract: Contract, topics: Vec<String>, data: String) -> EventLog
         params: Vec::new(),
         success: false,
         error_msg: "".to_string(),
+        data: Value::Null.to_string(),
+        block_number: 0,
+        transaction_hash: "".to_string(),
     };
 }
 

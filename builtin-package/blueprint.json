@@ -1,0 +1,6 @@
+{
+  "name": "fevm_json_rpc",
+  "dependencies": [
+    "name:fevm_json_rpc"
+  ]
+}

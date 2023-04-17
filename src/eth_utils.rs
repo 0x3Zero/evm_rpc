@@ -3,6 +3,7 @@ use crate::fce_results::{
 };
 use marine_rs_sdk::marine;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use ethabi::{decode, ParamType};
 
 pub const BLOCK_NUMBER_TAGS: [&'static str; 3] = ["latest", "earliest", "pending"];
 pub static NONCE_COUNTER: AtomicUsize = AtomicUsize::new(1);
@@ -106,4 +107,34 @@ pub fn util_get_list_blocks_range(start: u64, end: u64) -> Vec<u64> {
     }
 
     blocks
+}
+
+#[marine]
+pub fn decode_abi(abi: Vec<String>, data: String) -> Vec<String> {
+  let data_bytes = &hex::decode(&data).unwrap();
+
+  let mut new_abi: Vec<ParamType> = Vec::new();
+
+  for row in abi  {
+    if row == "string" {
+      new_abi.push(ParamType::String);
+    }
+    if row == "address" {
+      new_abi.push(ParamType::Address);
+    }
+    if row == "bytes" {
+      new_abi.push(ParamType::Bytes);
+    }
+    if row == "int256" || row == "int" {
+      new_abi.push(ParamType::Int(256));
+    }
+    if row == "bool" {
+      new_abi.push(ParamType::Bool);
+    }
+  }
+
+  let results = decode(&new_abi, data_bytes).unwrap();
+  let new_results: Vec<String> = results.into_iter().map(|token| token.clone().to_string()).collect();
+
+  new_results
 }
