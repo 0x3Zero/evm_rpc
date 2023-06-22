@@ -90,6 +90,17 @@ pub fn hex_to_string(hex: String) -> String {
 }
 
 #[marine]
+pub fn shorten_hex(hex: &str, to_len: u32) -> String {
+  let hex_len = hex.len();
+  let hex_to = to_len as usize;
+  let hex_from = hex_len-hex_to;
+
+  let shortened_hex = &hex[hex_from..];
+
+  format!("0x{}", shortened_hex)
+}
+
+#[marine]
 pub fn util_get_method_hash(input: String) -> String {
     let input_str = input.as_str();
     let input = input_str.strip_prefix("0x").unwrap_or(input_str);
